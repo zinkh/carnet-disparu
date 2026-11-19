@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17372E">
+<title>Le carnet disparu, jeu de piste Art nouveau à Nancy</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;600;700&display=swap">
+<script src="config.js"></script>
+<style>
+:root{--ink:#17372E;--coral:#C8462F;--coral-l:#E8604C;--teal:#0E716D;--teal-l:#138A86;--yel:#F2B830;--lil:#6F4FA3;
+--t-coral:#FBE1DA;--t-teal:#D6EEEB;--t-yel:#FCEBC0;--t-lil:#ECE4F6;--paper:#FFF6E5;--grey:#4A5A54}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font-family:Inter,Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+h1,h2,h3,.titre{font-family:'Bricolage Grotesque','Trebuchet MS',sans-serif;font-weight:800;margin:0;line-height:1.05}
+button,input,textarea,select{font:inherit;color:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border-radius:999px;border:2px solid var(--ink);background:#fff;font-weight:700;cursor:pointer}
+.btn.plein{background:var(--ink);color:#fff}
+.btn.corail{background:var(--coral);border-color:var(--coral);color:#fff}
+.btn.teal{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.petit{min-height:40px;padding:0 14px;font-size:14px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.ecran{display:none;height:100%}
+.ecran.actif{display:flex}
+/* Accueil */
+#accueil{flex-direction:column;overflow:auto;position:relative}
+#accueil .contenu{position:relative;max-width:520px;margin:0 auto;padding:32px 22px 40px;display:flex;flex-direction:column;gap:18px}
+.bulle{position:fixed;border-radius:50%;z-index:0}
+#accueil h1{font-size:56px;letter-spacing:-.02em}
+#accueil h1 span{box-shadow:inset 0 -20px 0 var(--yel)}
+.surtitre{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--coral)}
+.carte-blanche{background:#fff;border-radius:18px;padding:16px}
+label{font-weight:700;font-size:14px;display:block;margin-bottom:6px}
+input[type=text],input[type=number],textarea{width:100%;border:2px solid var(--ink);border-radius:14px;padding:12px 14px;background:#fff;font-size:16px}
+textarea{min-height:90px;resize:vertical}
+ul.regles{margin:0;padding-left:20px;line-height:1.55;font-size:15px}
+/* Jeu */
+#jeu{flex-direction:column;position:relative}
+#barre{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));background:var(--ink);color:#fff;z-index:500}
+#barre .titre{font-size:18px}
+.pastilles{display:flex;gap:8px;align-items:center}
+.pastille{background:rgba(255,255,255,.14);border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px;white-space:nowrap}
+.pastille.score{background:var(--yel);color:var(--ink)}
+#menuBtn{background:none;border:0;color:#fff;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#carte{flex:1;min-height:0;z-index:1}
+#centrer{position:absolute;right:12px;top:76px;z-index:600;width:48px;height:48px;border-radius:50%;border:2px solid var(--ink);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#gps{position:absolute;left:12px;top:76px;z-index:600;background:#fff;border:2px solid var(--ink);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
+/* Panneau bas */
+#panneau{position:absolute;left:0;right:0;bottom:0;z-index:700;background:var(--paper);border-radius:22px 22px 0 0;box-shadow:0 -8px 30px rgba(23,55,46,.25);max-height:78%;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+#panneau .poignee{width:44px;height:5px;border-radius:9px;background:#c9bfa6;margin:10px auto 4px;flex:none}
+#panneau .defile{overflow:auto;padding:6px 18px 18px;display:flex;flex-direction:column;gap:12px}
+.entete-etape{display:flex;align-items:center;gap:12px}
+.num{width:42px;height:42px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:19px;color:#fff;background:var(--coral)}
+.num.p2{background:var(--teal)}
+.entete-etape h2{font-size:22px}
+.adresse{font-size:13px;color:var(--grey);margin-top:2px}
+.distance{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:30px}
+.ligne{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.photo{width:100%;max-height:220px;object-fit:cover;border-radius:16px;display:block}
+.encart{border-radius:16px;padding:12px 14px;line-height:1.5;font-size:15px}
+.encart.mission{background:var(--t-yel)}
+.encart.question{background:#fff}
+.encart.bon{background:var(--t-teal)}
+.encart.faux{background:var(--t-coral)}
+.encart.attente{background:var(--t-lil)}
+.choix{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.choix label{display:flex;align-items:center;gap:10px;font-weight:600;border:2px solid #e3d7bb;border-radius:14px;padding:12px;margin:0;cursor:pointer;background:#fff;min-height:48px}
+.choix input{width:20px;height:20px;accent-color:var(--teal)}
+.choix label:has(input:checked){border-color:var(--teal);background:var(--t-teal)}
+.aides{display:flex;gap:8px;flex-wrap:wrap}
+.petit-texte{font-size:13px;color:var(--grey)}
+/* Menu latéral */
+#voile{position:fixed;inset:0;background:rgba(23,55,46,.45);z-index:900;display:none}
+#tiroir{position:fixed;top:0;right:0;bottom:0;width:min(380px,92vw);background:var(--paper);z-index:1000;transform:translateX(105%);transition:transform .25s;display:flex;flex-direction:column}
+#tiroir.ouvert{transform:none}
+#tiroir .haut{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;padding-top:max(16px,env(safe-area-inset-top))}
+#tiroir .corps{overflow:auto;padding:0 18px 24px;display:flex;flex-direction:column;gap:14px}
+.onglets{display:flex;gap:8px}
+.onglets button{flex:1}
+.liste-etapes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.liste-etapes button{width:100%;display:flex;align-items:center;gap:10px;text-align:left;background:#fff;border:2px solid transparent;border-radius:14px;padding:8px 10px;cursor:pointer;min-height:48px}
+.liste-etapes button.cible{border-color:var(--ink)}
+.liste-etapes .mini{width:30px;height:30px;font-size:14px}
+.etat{margin-left:auto;font-size:13px;font-weight:700;white-space:nowrap}
+.classement{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.classement li{display:flex;gap:10px;align-items:center;background:#fff;border-radius:14px;padding:10px 12px}
+.classement .rang{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:20px;width:28px}
+/* Fin et pause */
+#fin{flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:16px}
+#fin h1{font-size:46px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;z-index:2000;display:none;max-width:90vw;font-weight:600}
+/* Marqueurs */
+.marq{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);font-family:Inter,Arial,sans-serif}
+.marq.p1{background:var(--coral-l)}.marq.p2{background:var(--teal-l)}
+.marq.fait{background:#9aa7a2}
+.marq.cible{transform:scale(1.3);border-color:var(--yel)}
+.moi{width:18px;height:18px;border-radius:50%;background:#2D7FF9;border:3px solid #fff;box-shadow:0 0 0 2px rgba(45,127,249,.35)}
+.cache{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- ACCUEIL -->
+<section id="accueil" class="ecran actif" aria-labelledby="titreAccueil">
+  <div class="bulle" style="width:300px;height:300px;right:-110px;top:-120px;background:var(--t-yel)" aria-hidden="true"></div>
+  <div class="bulle" style="width:240px;height:240px;left:-110px;bottom:-60px;background:var(--t-teal)" aria-hidden="true"></div>
+  <div class="contenu">
+    <div class="surtitre">Jeu de piste · Nancy</div>
+    <h1 id="titreAccueil"><span>Le carnet</span><br>disparu</h1>
+    <p style="margin:0;font-size:16px;line-height:1.55">Nancy, 1901. Les pages du carnet de croquis de l'École de Nancy se sont envolées dans la ville. Suivez la carte, rejoignez chaque étape et répondez à sa question pour reconstituer le carnet. 22 étapes, de la place Stanislas à la villa Majorelle.</p>
+
+    <div id="blocReprise" class="carte-blanche cache">
+      <p style="margin:0 0 10px">Équipe en cours : <b id="nomReprise"></b></p>
+      <div class="ligne"><button class="btn plein" id="reprendre">Reprendre la partie</button><button class="btn petit" id="nouvelle">Nouvelle équipe</button></div>
+    </div>
+
+    <form id="formEquipe" class="carte-blanche" style="display:flex;flex-direction:column;gap:12px">
+      <div><label for="nom">Nom de l'équipe</label><input id="nom" type="text" maxlength="40" required autocomplete="off" placeholder="Les Ginkgos masqués"></div>
+      <div><label for="membres">Prénoms des membres</label><input id="membres" type="text" maxlength="200" autocomplete="off" placeholder="Léa, Hugo, Sami, Inès"></div>
+      <button class="btn corail" type="submit">C'est parti !</button>
+      <p class="petit-texte" style="margin:0">Le jeu utilise la position du téléphone pour débloquer les étapes. Votre position n'est envoyée qu'au moment où vous validez une réponse.</p>
+    </form>
+
+    <div class="carte-blanche" style="background:var(--t-yel)">
+      <h3 style="font-size:20px;margin-bottom:8px">Les règles</h3>
+      <ul class="regles">
+        <li>Une étape se débloque à moins de 50 m.</li>
+        <li>Bonne réponse : 10 points. Une seule tentative.</li>
+        <li>Indice : moins 3 points. Solution : moins 6 points.</li>
+        <li>On traverse aux passages piétons et on reste groupés.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- JEU -->
+<section id="jeu" class="ecran" aria-label="Partie en cours">
+  <div id="barre">
+    <div class="titre" id="nomEquipe">Équipe</div>
+    <div class="pastilles">
+      <span class="pastille" id="progression">0/22</span>
+      <span class="pastille score" id="score">0 pt</span>
+      <button id="menuBtn" aria-label="Ouvrir le menu"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+  <div id="carte" role="region" aria-label="Carte du parcours"></div>
+  <div id="gps">Recherche du GPS…</div>
+  <button id="centrer" aria-label="Centrer sur ma position"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#17372E" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
+  <div id="panneau">
+    <div class="poignee" aria-hidden="true"></div>
+    <div class="defile" id="contenuPanneau"></div>
+  </div>
+</section>
+
+<!-- FIN -->
+<section id="fin" class="ecran" aria-labelledby="titreFin">
+  <div class="surtitre">Carnet complet</div>
+  <h1 id="titreFin">Bravo !</h1>
+  <p id="texteFin" style="font-size:18px;margin:0"></p>
+  <button class="btn plein" id="voirClassement">Voir le classement</button>
+  <button class="btn" id="retourCarte">Revenir à la carte</button>
+</section>
+
+<!-- MENU -->
+<div id="voile"></div>
+<aside id="tiroir" aria-label="Menu" aria-hidden="true">
+  <div class="haut"><h2 style="font-size:24px">Le carnet</h2><button class="btn petit" id="fermerMenu">Fermer</button></div>
+  <div class="corps">
+    <div class="onglets"><button class="btn petit plein" data-onglet="etapes">Étapes</button><button class="btn petit" data-onglet="classement">Classement</button></div>
+    <div id="ongletEtapes"><ul class="liste-etapes" id="listeEtapes"></ul></div>
+    <div id="ongletClassement" class="cache"><ol class="classement" id="listeClassement"></ol></div>
+  </div>
+</aside>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(() => {
+  const API = (window.CARNET_API || "").replace(/\/+$/, "");
+  const params = new URLSearchParams(location.search);
+  const PARTIE = (params.get("partie") || "nancy").toLowerCase().replace(/[^a-z0-9_-]/g, "") || "nancy";
+  const CLE = "carnet-disparu-" + PARTIE;
+  const $ = (s) => document.querySelector(s);
+  const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  let JEU, ETAPES = [];
+  let etat = JSON.parse(localStorage.getItem(CLE) || "null"); // { id, nom }
+  let progres = { reponses: {}, aides: {}, bonus: 0 };
+  let cible = null;          // id de l'étape visée
+  const CLE_OUV = CLE + "-ouvertes";
+  let debloquees = new Set(JSON.parse(localStorage.getItem(CLE_OUV) || "[]")); // étapes ouvertes
+  const ouvrirEtape = (id) => { debloquees.add(id); localStorage.setItem(CLE_OUV, JSON.stringify([...debloquees])); };
+  let position = null;       // { lat, lon, precision }
+  let carte, marqueurs = {}, moi, cercleMoi, suivi = true;
+  let resultat = null;       // dernier résultat affiché
+  let aidesTexte = {};       // textes d'indice / solution reçus
+
+  // ---------- Utilitaires ----------
+  function toast(msg, ms = 2600) { const t = $("#toast"); t.textContent = msg; t.style.display = "block"; clearTimeout(t._h); t._h = setTimeout(() => (t.style.display = "none"), ms); }
+  async function appel(chemin, corps) {
+    const r = await fetch(API + chemin, corps ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corps) } : {});
+    const d = await r.json().catch(() => ({ erreur: "Réponse illisible du serveur." }));
+    if (!r.ok) throw Object.assign(new Error(d.erreur || "Erreur réseau."), { status: r.status });
+    return d;
+  }
+  function distance(a, b, c, d) {
+    const R = 6371000, r = Math.PI / 180;
+    const x = Math.sin(((c - a) * r) / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin(((d - b) * r) / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(x));
+  }
+  const fmtDist = (m) => (m < 1000 ? Math.round(m) + " m" : (m / 1000).toFixed(1).replace(".", ",") + " km");
+  const etape = (id) => ETAPES.find((e) => e.id === id);
+  const faite = (id) => !!progres.reponses[id];
+  const score = () => Object.values(progres.reponses).reduce((s, r) => s + (r.points || 0), 0) + (progres.bonus || 0);
+  const prochaine = () => (ETAPES.find((e) => !faite(e.id)) || {}).id || null;
+
+  function montrer(id) { document.querySelectorAll(".ecran").forEach((e) => e.classList.toggle("actif", e.id === id)); if (id === "jeu" && carte) setTimeout(() => carte.invalidateSize(), 50); }
+
+  // ---------- Démarrage ----------
+  async function init() {
+    try {
+      const d = await appel("/api/jeu");
+      JEU = d.jeu; ETAPES = d.etapes;
+    } catch (e) { toast("Impossible de charger le jeu : " + e.message, 6000); return; }
+    if (etat) { $("#nomReprise").textContent = etat.nom; $("#blocReprise").classList.remove("cache"); }
+  }
+
+  $("#formEquipe").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const nom = $("#nom").value.trim(); if (!nom) return;
+    try {
+      const d = await appel("/api/equipe", { partie: PARTIE, nom, membres: $("#membres").value.trim() });
+      etat = { id: d.id, nom: d.nom }; localStorage.setItem(CLE, JSON.stringify(etat));
+      demarrer();
+    } catch (e) { toast(e.message); }
+  });
+  $("#reprendre").addEventListener("click", demarrer);
+  $("#nouvelle").addEventListener("click", () => { if (confirm("Créer une nouvelle équipe ? La partie en cours restera enregistrée sur le serveur.")) { localStorage.removeItem(CLE); etat = null; $("#blocReprise").classList.add("cache"); } });
+
+  async function chargerProgres() {
+    const d = await appel("/api/equipe/" + etat.id);
+    progres = { reponses: {}, aides: {}, bonus: d.bonus || 0 };
+    d.reponses.forEach((r) => (progres.reponses[r.etape] = r));
+    d.aides.forEach((a) => ((progres.aides[a.etape] ||= {})[a.type] = true));
+  }
+
+  async function demarrer() {
+    try { await chargerProgres(); }
+    catch (e) { if (e.status === 404) { localStorage.removeItem(CLE); toast("Équipe introuvable, créez-en une nouvelle."); location.reload(); return; } toast(e.message); return; }
+    $("#nomEquipe").textContent = etat.nom;
+    montrer("jeu");
+    if (!carte) initCarte();
+    cible = prochaine();
+    if (!cible) return finir();
+    majTout(true);
+    lancerGPS();
+  }
+
+  // ---------- Carte ----------
+  function initCarte() {
+    carte = L.map("carte", { zoomControl: false }).setView([48.688, 6.175], 15);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© contributeurs OpenStreetMap" }).addTo(carte);
+    const p1 = ETAPES.filter((e) => e.partie === 1).map((e) => [e.lat, e.lon]);
+    const p2 = ETAPES.filter((e) => e.partie === 2).map((e) => [e.lat, e.lon]);
+    L.polyline(p1, { color: "#E8604C", weight: 4, opacity: 0.8 }).addTo(carte);
+    L.polyline(p2, { color: "#138A86", weight: 4, opacity: 0.8, dashArray: "8 8" }).addTo(carte);
+    ETAPES.forEach((e) => {
+      marqueurs[e.id] = L.marker([e.lat, e.lon], { icon: icone(e), keyboard: true, title: e.id + ". " + e.titre }).addTo(carte)
+        .on("click", () => { cible = e.id; majTout(true); });
+    });
+    carte.on("dragstart", () => (suivi = false));
+    $("#centrer").addEventListener("click", () => { suivi = true; if (position) carte.setView([position.lat, position.lon], 17); else toast("Position pas encore trouvée."); });
+  }
+  function icone(e) {
+    const cls = ["marq", "p" + e.partie, faite(e.id) ? "fait" : "", cible === e.id ? "cible" : ""].join(" ");
+    return L.divIcon({ className: "", html: `<div class="${cls}">${faite(e.id) ? "✓" : e.id}</div>`, iconSize: [30, 30], iconAnchor: [15, 15] });
+  }
+
+  // ---------- GPS ----------
+  function lancerGPS() {
+    if (!("geolocation" in navigator)) { $("#gps").textContent = "GPS indisponible"; return; }
+    navigator.geolocation.watchPosition((p) => {
+      position = { lat: p.coords.latitude, lon: p.coords.longitude, precision: Math.round(p.coords.accuracy) };
+      $("#gps").textContent = "GPS ± " + position.precision + " m";
+      const ll = [position.lat, position.lon];
+      if (!moi) {
+        moi = L.marker(ll, { icon: L.divIcon({ className: "", html: '<div class="moi"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }), interactive: false }).addTo(carte);
+        cercleMoi = L.circle(ll, { radius: position.precision, color: "#2D7FF9", weight: 1, fillOpacity: 0.08, interactive: false }).addTo(carte);
+        carte.setView(ll, 17);
+      } else { moi.setLatLng(ll); cercleMoi.setLatLng(ll).setRadius(position.precision); if (suivi) carte.panTo(ll); }
+      if (cible && !faite(cible) && !debloquees.has(cible)) majPanneau();
+    }, (err) => {
+      $("#gps").textContent = err.code === 1 ? "GPS refusé : autorisez la localisation" : "GPS introuvable";
+    }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+  }
+  function distanceCible() {
+    if (!position || !cible) return null;
+    const e = etape(cible); return distance(position.lat, position.lon, e.lat, e.lon);
+  }
+  function arrive() {
+    const d = distanceCible(); if (d === null) return false;
+    return d <= JEU.rayon + Math.min(position.precision || 0, 30);
+  }
+
+  // ---------- Affichage ----------
+  function majTout(centrer) {
+    const n = Object.keys(progres.reponses).length;
+    $("#progression").textContent = n + "/" + ETAPES.length;
+    $("#score").textContent = score() + " pt" + (score() > 1 ? "s" : "");
+    ETAPES.forEach((e) => marqueurs[e.id] && marqueurs[e.id].setIcon(icone(e)));
+    if (centrer && cible && !position) { const e = etape(cible); carte.setView([e.lat, e.lon], 17); }
+    majListe();
+    majPanneau();
+  }
+
+  function majPanneau() {
+    const zone = $("#contenuPanneau");
+    if (!cible) { zone.innerHTML = `<p>Toutes les étapes sont faites.</p><button class="btn plein" id="allerFin">Voir mon score</button>`; $("#allerFin").onclick = finir; return; }
+    const e = etape(cible);
+    const p2 = e.partie === 2 ? " p2" : "";
+    const tete = `<div class="entete-etape"><div class="num${p2}">${e.id}</div><div><h2>${esc(e.titre)}</h2><div class="adresse">${esc(e.adresse)} · Partie ${e.partie}, ${e.partie === 1 ? "le matin" : "l'après-midi"}</div></div></div>`;
+
+    // Étape déjà jouée
+    if (faite(e.id)) {
+      const r = progres.reponses[e.id];
+      const res = resultat && resultat.etape === e.id ? resultat : null;
+      const lib = { juste: "Bonne réponse", faux: "Raté", a_noter: "Réponse envoyée, notée par l'enseignant", passee: "Étape passée" }[r.statut];
+      const cls = { juste: "bon", faux: "faux", a_noter: "attente", passee: "faux" }[r.statut];
+      zone.innerHTML = tete + `<div class="encart ${cls}"><b>${lib}</b>${r.points !== null && r.points !== undefined ? " · " + r.points + " pt" + (r.points > 1 ? "s" : "") : ""}
+        ${res && res.solution && r.statut === "faux" ? `<br>La bonne réponse : <b>${esc(res.solution)}</b>` : ""}
+        ${res && res.explication && r.statut !== "a_noter" ? `<br>${esc(res.explication)}` : ""}</div>` + boutonSuivant(e);
+      branchSuivant(); return;
+    }
+
+    // Pas encore arrivé
+    if (!debloquees.has(e.id)) {
+      const d = distanceCible();
+      const ok = arrive();
+      if (ok) { ouvrirEtape(e.id); if (navigator.vibrate) navigator.vibrate([120, 60, 120]); toast("Étape " + e.id + " débloquée !"); return majPanneau(); }
+      zone.innerHTML = tete + `
+        <div class="ligne" style="justify-content:space-between"><div><div class="petit-texte">Distance</div><div class="distance">${d === null ? "…" : fmtDist(d)}</div></div>
+        <a class="btn petit" href="https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${e.lat},${e.lon}" target="_blank" rel="noopener">Itinéraire</a></div>
+        <p class="petit-texte" style="margin:0">Approchez-vous à moins de ${JEU.rayon} m pour ouvrir l'étape.</p>
+        <button class="btn petit" id="manuel">Nous sommes devant, le GPS se trompe</button>`;
+      $("#manuel").onclick = () => { if (confirm("Débloquer sans GPS ? L'enseignant le verra dans les résultats.")) { ouvrirEtape(e.id); e._manuel = true; majPanneau(); } };
+      return;
+    }
+
+    // Étape ouverte : contenu + question
+    const aides = progres.aides[e.id] || {};
+    const q = e.question;
+    for (const [type, k] of [["indice", "i"], ["solution", "s"]]) {
+      if (aides[type] && aidesTexte[e.id + k] === undefined) {
+        aidesTexte[e.id + k] = null;
+        appel("/api/aide", { equipe: etat.id, etape: e.id, type }).then((d) => { aidesTexte[e.id + k] = d.indice || d.solution; majPanneau(); }).catch(() => {});
+      }
+    }
+    let champ = "";
+    if (q.type === "qcm") champ = `<div class="choix" role="radiogroup">${q.choix.map((c, i) => `<label><input type="radio" name="rep" value="${i}"> ${esc(c)}</label>`).join("")}</div>`;
+    else if (q.type === "nombre") champ = `<input type="number" inputmode="decimal" id="rep" style="margin-top:10px" aria-label="Votre réponse">`;
+    else champ = `<textarea id="rep" style="margin-top:10px" maxlength="500" aria-label="Votre réponse"></textarea>`;
+    zone.innerHTML = tete +
+      (e.photo ? `<img class="photo" src="${e.photo}" alt="${esc(e.titre)}">` : "") +
+      `<p style="margin:0;line-height:1.55">${esc(e.intro)}</p>
+       <div class="encart mission"><b>Mission :</b> ${esc(e.mission)}</div>
+       <div class="encart question"><b>${esc(q.enonce)}</b>${champ}</div>
+       ${aides.indice ? `<div class="encart attente"><b>Indice :</b> ${esc(aidesTexte[e.id + "i"] || "chargement…")}</div>` : ""}
+       ${aides.solution ? `<div class="encart attente"><b>Solution :</b> ${esc(aidesTexte[e.id + "s"] || "chargement…")}</div>` : ""}
+       <div class="aides">
+         ${aides.indice ? "" : `<button class="btn petit" id="indice">Indice (moins 3)</button>`}
+         ${aides.solution || q.type === "texte" ? "" : `<button class="btn petit" id="solution">Solution (moins 6)</button>`}
+         <button class="btn petit" id="passer">Passer l'étape</button>
+       </div>
+       <button class="btn teal" id="valider">Valider la réponse</button>`;
+    const indiceBtn = $("#indice"), solBtn = $("#solution");
+    if (indiceBtn) indiceBtn.onclick = () => aide(e, "indice");
+    if (solBtn) solBtn.onclick = () => aide(e, "solution");
+    $("#passer").onclick = () => { if (confirm("Passer cette étape ? Elle vaudra 0 point.")) envoyer(e, null, true); };
+    $("#valider").onclick = () => {
+      let v;
+      if (q.type === "qcm") { const c = document.querySelector('input[name="rep"]:checked'); v = c ? c.value : ""; }
+      else v = $("#rep").value.trim();
+      if (v === "") return toast("Choisissez ou écrivez une réponse.");
+      if (!confirm("Une seule tentative : on valide ?")) return;
+      envoyer(e, v, false);
+    };
+  }
+
+  function boutonSuivant(e) {
+    const p = prochaine();
+    if (!p) return `<button class="btn corail" id="suivant">Terminer le jeu</button>`;
+    const pause = e.id === 8 && !faite(9) ? `<div class="encart mission"><b>Pause déjeuner !</b> La partie 2 reprend devant l'Excelsior.</div>` : "";
+    return pause + `<button class="btn corail" id="suivant">Étape suivante : ${p}. ${esc(etape(p).titre)}</button>`;
+  }
+  function branchSuivant() {
+    $("#suivant").onclick = () => { resultat = null; cible = prochaine(); if (!cible) return finir(); suivi = true; majTout(true); if (position) carte.panTo([position.lat, position.lon]); };
+  }
+
+  async function aide(e, type) {
+    const cout = type === "indice" ? JEU.points.indice : JEU.points.solution;
+    if (!confirm(`${type === "indice" ? "Un indice" : "La solution"} coûte ${cout} points. Continuer ?`)) return;
+    try {
+      const d = await appel("/api/aide", { equipe: etat.id, etape: e.id, type });
+      (progres.aides[e.id] ||= {})[type] = true;
+      aidesTexte[e.id + (type === "indice" ? "i" : "s")] = d.indice || d.solution;
+      majPanneau();
+    } catch (err) { toast(err.message); }
+  }
+
+  async function envoyer(e, valeur, passer) {
+    const corps = { equipe: etat.id, etape: e.id, reponse: valeur, manuel: !!e._manuel,
+      lat: position?.lat, lon: position?.lon, precision: position?.precision };
+    const btn = $("#valider"); if (btn) btn.disabled = true;
+    try {
+      const d = await appel(passer ? "/api/passer" : "/api/reponse", corps);
+      progres.reponses[e.id] = { etape: e.id, statut: d.statut, points: d.points };
+      resultat = { etape: e.id, ...d };
+      if (d.statut === "juste" && navigator.vibrate) navigator.vibrate(200);
+      majTout(false);
+    } catch (err) {
+      if (err.status === 409) { await chargerProgres(); majTout(false); }
+      toast(err.message); if (btn) btn.disabled = false;
+    }
+  }
+
+  // ---------- Menu ----------
+  function majListe() {
+    $("#listeEtapes").innerHTML = ETAPES.map((e) => {
+      const r = progres.reponses[e.id];
+      const st = r ? (r.statut === "a_noter" ? "à noter" : r.statut === "passee" ? "passée" : (r.points || 0) + " pt") : (e.id === cible ? "en cours" : "");
+      return `<li><button data-id="${e.id}" class="${e.id === cible ? "cible" : ""}"><span class="num mini${e.partie === 2 ? " p2" : ""}">${e.id}</span><span>${esc(e.titre)}</span><span class="etat">${st}</span></button></li>`;
+    }).join("");
+    document.querySelectorAll("#listeEtapes button").forEach((b) => (b.onclick = () => { cible = Number(b.dataset.id); resultat = null; fermer(); majTout(true); const e = etape(cible); carte.setView([e.lat, e.lon], 17); suivi = false; }));
+  }
+  async function majClassement() {
+    try {
+      const l = await appel("/api/classement?partie=" + encodeURIComponent(PARTIE));
+      $("#listeClassement").innerHTML = l.length ? l.map((t, i) => `<li><span class="rang">${i + 1}</span><span style="flex:1"><b>${esc(t.nom)}</b><br><span class="petit-texte">${t.etapes} étape${t.etapes > 1 ? "s" : ""}</span></span><b>${t.points} pts</b></li>`).join("") : "<li>Aucune équipe pour l'instant.</li>";
+    } catch (e) { toast(e.message); }
+  }
+  function ouvrir(onglet = "etapes") {
+    $("#tiroir").classList.add("ouvert"); $("#tiroir").setAttribute("aria-hidden", "false"); $("#voile").style.display = "block";
+    document.querySelectorAll("[data-onglet]").forEach((b) => b.classList.toggle("plein", b.dataset.onglet === onglet));
+    $("#ongletEtapes").classList.toggle("cache", onglet !== "etapes");
+    $("#ongletClassement").classList.toggle("cache", onglet !== "classement");
+    if (onglet === "classement") majClassement();
+  }
+  function fermer() { $("#tiroir").classList.remove("ouvert"); $("#tiroir").setAttribute("aria-hidden", "true"); $("#voile").style.display = "none"; }
+  $("#menuBtn").onclick = () => ouvrir();
+  $("#fermerMenu").onclick = fermer; $("#voile").onclick = fermer;
+  document.querySelectorAll("[data-onglet]").forEach((b) => (b.onclick = () => ouvrir(b.dataset.onglet)));
+
+  function finir() {
+    $("#texteFin").textContent = `${etat.nom} termine avec ${score()} points.`;
+    montrer("fin");
+  }
+  $("#voirClassement").onclick = () => { montrer("jeu"); ouvrir("classement"); };
+  $("#retourCarte").onclick = () => montrer("jeu");
+
+  init();
+})();
+</script>
+</body>
+</html>

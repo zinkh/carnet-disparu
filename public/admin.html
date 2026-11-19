@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Le carnet disparu, espace enseignant</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Inter:wght@400;600;700&display=swap">
+<script src="config.js"></script>
+<style>
+:root{--ink:#17372E;--coral:#C8462F;--teal:#0E716D;--yel:#F2B830;--paper:#FFF6E5;--grey:#4A5A54;--t-teal:#D6EEEB;--t-coral:#FBE1DA;--t-lil:#ECE4F6;--t-yel:#FCEBC0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,Arial,sans-serif}
+h1,h2{font-family:'Bricolage Grotesque','Trebuchet MS',sans-serif;font-weight:800;margin:0}
+.page{max-width:1200px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:18px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:999px;border:2px solid var(--ink);background:#fff;font-weight:700;cursor:pointer;font:inherit;font-weight:700;color:var(--ink);text-decoration:none}
+.btn.plein{background:var(--ink);color:#fff}
+.btn.petit{min-height:34px;padding:0 12px;font-size:13px}
+input,select{font:inherit;border:2px solid var(--ink);border-radius:12px;padding:9px 12px;background:#fff;min-height:44px}
+.ligne{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.carte{background:#fff;border-radius:18px;padding:16px}
+.grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 8px;border-bottom:1px solid #e9dfc8;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--grey)}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700}
+.juste{background:var(--t-teal)}.faux{background:var(--t-coral)}.a_noter{background:var(--t-lil)}.passee{background:#eee}
+.alerte{background:var(--t-yel);border-radius:12px;padding:2px 8px;font-size:12px;font-weight:700}
+#carte{height:420px;border-radius:14px}
+.defile{max-height:520px;overflow:auto}
+.cache{display:none!important}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;display:none;font-weight:600}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="ligne" style="justify-content:space-between">
+    <div><div style="font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--coral)">Espace enseignant</div><h1 style="font-size:40px">Le carnet disparu</h1></div>
+    <div class="ligne cache" id="actions">
+      <span id="maj" style="font-size:13px;color:var(--grey)"></span>
+      <a class="btn" id="csv" href="#">Exporter en CSV</a>
+      <button class="btn plein" id="rafraichir">Actualiser</button>
+    </div>
+  </div>
+
+  <form id="connexion" class="carte ligne">
+    <label for="cle" style="font-weight:700">Clé enseignant</label>
+    <input id="cle" type="password" autocomplete="current-password" required>
+    <label for="partie" style="font-weight:700">Partie</label>
+    <input id="partie" type="text" value="nancy" style="width:140px">
+    <button class="btn plein" type="submit">Ouvrir</button>
+  </form>
+
+  <div id="tableau" class="cache" style="display:flex;flex-direction:column;gap:18px">
+    <div class="grille">
+      <section class="carte"><h2 style="font-size:24px;margin-bottom:10px">Classement</h2>
+        <table><thead><tr><th>#</th><th>Équipe</th><th>Membres</th><th class="num">Étapes</th><th class="num">Points</th></tr></thead><tbody id="classement"></tbody></table>
+      </section>
+      <section class="carte"><h2 style="font-size:24px;margin-bottom:10px">Dernières positions</h2>
+        <div id="carte" role="region" aria-label="Carte des équipes"></div>
+        <p style="font-size:13px;color:var(--grey);margin:8px 0 0">Position envoyée par chaque équipe à sa dernière réponse.</p>
+      </section>
+    </div>
+
+    <section class="carte"><h2 style="font-size:24px;margin-bottom:10px">Ajouter un bonus ou une pénalité</h2>
+      <form id="formBonus" class="ligne">
+        <label for="bEquipe" class="cache">Équipe</label><select id="bEquipe" required></select>
+        <label for="bPoints" class="cache">Points</label><input id="bPoints" type="number" placeholder="Points (ex. 5 ou -3)" style="width:180px" required>
+        <label for="bMotif" class="cache">Motif</label><input id="bMotif" type="text" placeholder="Motif (ex. photo ginkgo)" style="flex:1;min-width:200px">
+        <button class="btn plein" type="submit">Ajouter</button>
+      </form>
+    </section>
+
+    <section class="carte"><div class="ligne" style="justify-content:space-between;margin-bottom:10px"><h2 style="font-size:24px">Réponses</h2>
+      <div class="ligne"><label for="filtre" style="font-size:14px;font-weight:700">Afficher</label><select id="filtre"><option value="">Toutes</option><option value="a_noter">À noter</option><option value="manuel">Sans GPS</option></select></div></div>
+      <div class="defile"><table><thead><tr><th>Heure</th><th>Équipe</th><th>Étape</th><th>Réponse</th><th>Statut</th><th class="num">Points</th><th>Aides</th><th>Contrôle</th></tr></thead><tbody id="reponses"></tbody></table></div>
+    </section>
+
+    <section class="carte"><h2 style="font-size:24px;margin-bottom:10px">Bonus attribués</h2>
+      <table><thead><tr><th>Heure</th><th>Équipe</th><th class="num">Points</th><th>Motif</th></tr></thead><tbody id="bonus"></tbody></table>
+    </section>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(() => {
+  const API = (window.CARNET_API || "").replace(/\/+$/, "");
+  const $ = (s) => document.querySelector(s);
+  const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  let cle = sessionStorage.getItem("carnet-cle") || "", partie = sessionStorage.getItem("carnet-partie") || "nancy";
+  let donnees = null, carte = null, couche = null, minuterie = null;
+  const heure = (iso) => iso ? new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "";
+  function toast(m) { const t = $("#toast"); t.textContent = m; t.style.display = "block"; clearTimeout(t._h); t._h = setTimeout(() => (t.style.display = "none"), 2600); }
+
+  async function appel(chemin, corps) {
+    const r = await fetch(API + chemin, { method: corps ? "POST" : "GET", headers: { "Content-Type": "application/json", "X-Admin-Key": cle }, body: corps ? JSON.stringify({ ...corps, partie }) : undefined });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.erreur || "Erreur réseau.");
+    return d;
+  }
+
+  async function charger() {
+    try { donnees = await appel("/api/admin/donnees?partie=" + encodeURIComponent(partie)); }
+    catch (e) { toast(e.message); return false; }
+    afficher(); $("#maj").textContent = "Mis à jour à " + heure(new Date().toISOString()); return true;
+  }
+
+  function afficher() {
+    const titres = Object.fromEntries(donnees.etapes.map((e) => [e.id, e.titre]));
+    $("#classement").innerHTML = donnees.equipes.map((t, i) => `<tr><td>${i + 1}</td><td><b>${esc(t.nom)}</b></td><td>${esc(t.membres)}</td><td class="num">${t.etapes}/22</td><td class="num"><b>${t.points}</b></td></tr>`).join("") || `<tr><td colspan="5">Aucune équipe inscrite sur la partie « ${esc(partie)} ».</td></tr>`;
+    $("#bEquipe").innerHTML = donnees.equipes.map((t) => `<option value="${t.id}">${esc(t.nom)}</option>`).join("");
+    const f = $("#filtre").value;
+    const liste = donnees.reponses.filter((r) => !f || (f === "manuel" ? r.manuel : r.statut === f));
+    $("#reponses").innerHTML = liste.map((r) => `<tr>
+      <td>${heure(r.cree_le)}</td><td>${esc(r.equipe)}</td><td>${r.etape}. ${esc(titres[r.etape])}</td><td>${esc(r.reponse)}</td>
+      <td><span class="tag ${r.statut}">${{ juste: "juste", faux: "faux", a_noter: "à noter", passee: "passée" }[r.statut]}</span></td>
+      <td class="num">${r.points ?? "?"}</td>
+      <td>${r.indice ? "indice " : ""}${r.solution ? "solution" : ""}</td>
+      <td>${r.manuel ? '<span class="alerte">sans GPS</span> ' : ""}${r.distance_m !== null ? r.distance_m + " m" : ""}
+        ${r.statut === "a_noter" || r.statut === "juste" || r.statut === "faux" ? `<span class="ligne" style="margin-top:4px"><input type="number" min="0" max="10" value="${r.points ?? ""}" style="width:70px;min-height:34px;padding:4px 8px" aria-label="Points" data-id="${r.id}"><button class="btn petit" data-noter="${r.id}">Noter</button></span>` : ""}</td></tr>`).join("") || `<tr><td colspan="8">Aucune réponse.</td></tr>`;
+    document.querySelectorAll("[data-noter]").forEach((b) => (b.onclick = async () => {
+      const v = document.querySelector(`input[data-id="${b.dataset.noter}"]`).value;
+      try { await appel("/api/admin/noter", { id: b.dataset.noter, points: v }); toast("Note enregistrée."); charger(); } catch (e) { toast(e.message); }
+    }));
+    $("#bonus").innerHTML = donnees.bonus.map((b) => `<tr><td>${heure(b.cree_le)}</td><td>${esc(b.equipe)}</td><td class="num">${b.points}</td><td>${esc(b.motif)}</td></tr>`).join("") || `<tr><td colspan="4">Aucun bonus.</td></tr>`;
+    $("#csv").href = API + "/api/admin/export.csv?partie=" + encodeURIComponent(partie) + "&cle=" + encodeURIComponent(cle);
+    majCarte();
+  }
+
+  function majCarte() {
+    if (!carte) {
+      carte = L.map("carte").setView([48.686, 6.174], 14);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© contributeurs OpenStreetMap" }).addTo(carte);
+      donnees.etapes.forEach((e) => L.circleMarker([e.lat, e.lon], { radius: 5, color: "#17372E", weight: 1, fillColor: "#F2B830", fillOpacity: 1 }).bindTooltip(e.id + ". " + e.titre).addTo(carte));
+    }
+    if (couche) couche.remove();
+    couche = L.layerGroup().addTo(carte);
+    const vues = new Set();
+    donnees.reponses.forEach((r) => {
+      if (vues.has(r.equipe_id) || r.lat === null) return; vues.add(r.equipe_id);
+      L.circleMarker([r.lat, r.lon], { radius: 9, color: "#fff", weight: 2, fillColor: "#C8462F", fillOpacity: 1 })
+        .bindTooltip(`${r.equipe}, étape ${r.etape} à ${heure(r.cree_le)}`, { permanent: false }).addTo(couche);
+    });
+  }
+
+  $("#connexion").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    cle = $("#cle").value; partie = ($("#partie").value || "nancy").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    if (await charger()) ouvrir();
+  });
+  function ouvrir() {
+    sessionStorage.setItem("carnet-cle", cle); sessionStorage.setItem("carnet-partie", partie);
+    $("#connexion").classList.add("cache"); $("#tableau").classList.remove("cache"); $("#actions").classList.remove("cache");
+    setTimeout(() => carte && carte.invalidateSize(), 100);
+    clearInterval(minuterie); minuterie = setInterval(charger, 20000);
+  }
+  $("#rafraichir").onclick = charger;
+  $("#filtre").onchange = afficher;
+  $("#formBonus").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try { await appel("/api/admin/bonus", { equipe: $("#bEquipe").value, points: $("#bPoints").value, motif: $("#bMotif").value }); toast("Bonus ajouté."); $("#bPoints").value = ""; $("#bMotif").value = ""; charger(); }
+    catch (e) { toast(e.message); }
+  });
+  if (cle) { $("#cle").value = cle; $("#partie").value = partie; charger().then((ok) => ok && ouvrir()); }
+})();
+</script>
+</body>
+</html>

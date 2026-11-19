@@ -1,0 +1,42 @@
+name: Déployer sur Cloudflare
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer Wrangler
+        run: npm install --no-audit --no-fund
+
+      - name: Créer ou retrouver la base D1
+        run: |
+          trouver_id() {
+            npx wrangler d1 list --json | node -e "const l=JSON.parse(require('fs').readFileSync(0,'utf8'));const d=l.find(x=>x.name==='carnet-disparu');process.stdout.write(d?(d.uuid||d.id):'')"
+          }
+          ID=$(trouver_id)
+          if [ -z "$ID" ]; then
+            npx wrangler d1 create carnet-disparu
+            ID=$(trouver_id)
+          fi
+          echo "Base D1 : $ID"
+          sed -i "s/A_REMPLACER_PAR_L_ID_DONNE_PAR_WRANGLER/$ID/" wrangler.toml
+          npx wrangler d1 execute carnet-disparu --remote --file=schema.sql
+
+      - name: Publier le jeu
+        run: npx wrangler deploy
+
+      - name: Enregistrer la clé enseignant
+        run: echo "${{ secrets.ADMIN_KEY }}" | npx wrangler secret put ADMIN_KEY

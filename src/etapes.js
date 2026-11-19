@@ -1,0 +1,222 @@
+// Données du jeu « Le carnet disparu ».
+// Les champs `reponse` et `explication` restent côté serveur : l'API publique les retire.
+// Types de question :
+//   qcm    : `choix` = liste, `reponse` = index de la bonne réponse (0 = premier choix)
+//   nombre : `reponse` = valeur attendue, `tolerance` = écart accepté
+//   texte  : réponse libre, notée ensuite par l'enseignant (points en attente)
+
+export const JEU = {
+  titre: "Le carnet disparu",
+  sousTitre: "Art nouveau et Art déco à Nancy",
+  rayon: 50, // mètres : distance pour débloquer une étape
+  points: { bonne: 10, indice: 3, solution: 6 },
+};
+
+export const ETAPES = [
+  // ---------------- PARTIE 1 : LE MATIN ----------------
+  {
+    id: 1, partie: 1, titre: "Magasins Goudchaux", adresse: "4 rue des Dominicains",
+    lat: 48.692736, lon: 6.182783, photo: "img/goudchaux.jpg",
+    intro: "Façade en bois de l'ébéniste Eugène Vallin, en face de l'office de tourisme. Une seule plante dessine toute la façade : fleurs et feuilles dans la frise, tiges sur les montants, racines à la base.",
+    mission: "Trouvez la poignée de porte en forme de pomme de pin.",
+    question: { type: "qcm", enonce: "Quelle plante inspire tout le décor de la façade ?", choix: ["La glycine", "La berce du Caucase", "Le chardon", "Le nénuphar"] },
+    indice: "Une grande ombellifère aux fleurs blanches en parasol.",
+    reponse: 1, explication: "C'est la berce du Caucase : la nature donne sa forme à l'architecture, des racines jusqu'aux fleurs.",
+  },
+  {
+    id: 2, partie: 1, titre: "Pharmacie du Point Central", adresse: "35 rue Saint-Dizier",
+    lat: 48.69075, lon: 6.18255, photo: "img/pharmacie.jpg",
+    intro: "Pharmacie créée en 1915. Beaucoup de plantes servent à soigner : la nature est partout. C'est la seule pharmacie Art nouveau de Nancy qui a gardé son mobilier d'origine.",
+    mission: "Si elle est ouverte, entrez discrètement et observez le mobilier. Cherchez la feuille de la mosaïque au sol.",
+    question: { type: "qcm", enonce: "Qui a réalisé le mobilier de la pharmacie ?", choix: ["Émile Gallé", "Jacques Gruber", "Louis Majorelle", "Les frères Daum"] },
+    indice: "Ébéniste et ferronnier, il a aussi une villa à son nom dans le parcours.",
+    reponse: 2, explication: "Louis Majorelle, ébéniste et ferronnier. Au sol, la feuille de la mosaïque est un ginkgo.",
+  },
+  {
+    id: 3, partie: 1, titre: "Ancien Crédit Lyonnais", adresse: "7 bis rue Saint-Georges",
+    lat: 48.691088, lon: 6.183016, photo: null,
+    intro: "Travaux décidés en 1907. La façade reste classique, mais à l'intérieur se cache la plus grande verrière de Jacques Gruber à Nancy : 250 m².",
+    mission: "Si la banque est fermée, entrez dans le sas et regardez la verrière à travers la porte vitrée. Lisez le monogramme au centre.",
+    question: { type: "qcm", enonce: "Quelles sont les deux couleurs de la verrière, celles de la banque ?", choix: ["Bleu et or", "Vert et rouge", "Jaune et mauve", "Noir et blanc"] },
+    indice: "Une couleur de soleil, une couleur de lilas.",
+    reponse: 2, explication: "Jaune et mauve, les couleurs du Crédit Lyonnais, autour du monogramme « CL ».",
+  },
+  {
+    id: 4, partie: 1, titre: "Magasins Vaxelaire", adresse: "13 rue Raugraff",
+    lat: 48.690118, lon: 6.181707, photo: "img/vaxelaire.jpg",
+    intro: "Ce qui reste de la façade d'un grand magasin de la Belle Époque. La faune entre aussi dans le décor. Retenez un nom : Corbin, patron des Magasins Réunis et grand mécène de l'École de Nancy.",
+    mission: "Cherchez l'animal du décor. Le nom de Corbin vous servira cet après-midi.",
+    question: { type: "qcm", enonce: "Quel oiseau est évoqué dans le décor ?", choix: ["Le paon", "La cigogne", "Le hibou", "L'hirondelle"] },
+    indice: "Il fait la roue.",
+    reponse: 0, explication: "Le paon, qu'on retrouve dans d'autres bâtiments de la ville.",
+  },
+  {
+    id: 5, partie: 1, titre: "Graineterie Génin-Louis", adresse: "2 rue Bénit",
+    lat: 48.689902, lon: 6.179222, photo: "img/genin.jpg",
+    intro: "Ancienne graineterie. La structure métallique est laissée apparente, ce qui a fait scandale. L'Art nouveau est un art total : même les grilles des vitrines sont décoratives.",
+    mission: "Trouvez les fleurs de la frise.",
+    question: { type: "qcm", enonce: "Quel insecte dessinent les grilles des vitrines ?", choix: ["Une libellule", "Une abeille", "Un papillon", "Une coccinelle"] },
+    indice: "Regardez les grandes ailes symétriques.",
+    reponse: 2, explication: "Un papillon. Les fleurs de la frise sont des pavots.",
+  },
+  {
+    id: 6, partie: 1, titre: "Banque Renauld", adresse: "8 rue Saint-Jean (BNP Paribas)",
+    lat: 48.690608, lon: 6.181441, photo: "img/bnp.jpg",
+    intro: "Une banque dès l'origine, en 1909. Les plantes ne sont pas choisies au hasard : le ginkgo vient d'Extrême-Orient et ses feuilles virent au jaune en automne. À l'intérieur, la monnaie du pape orne le comptoir, l'escalier de Majorelle et les vitraux de Gruber.",
+    mission: "Si c'est ouvert, cherchez la monnaie du pape à l'intérieur.",
+    question: { type: "qcm", enonce: "Quel est le surnom du ginkgo, parfait pour une banque ?", choix: ["L'arbre aux mille écus", "L'arbre d'or", "L'arbre du trésor", "L'arbre aux sous"] },
+    indice: "On parle d'une ancienne monnaie.",
+    reponse: 0, explication: "L'arbre aux mille écus : acheté 40 écus pour être ramené en Europe, et ses feuilles deviennent jaunes comme l'or.",
+  },
+  {
+    id: 7, partie: 1, titre: "Chambre de commerce", adresse: "40 rue Henri-Poincaré",
+    lat: 48.69126, lon: 6.176448, photo: "img/cci.jpg",
+    intro: "Construite en 1908 pour symboliser la force de l'économie lorraine. Cinq vitraux racontent cette économie : artisanat, chimie, sidérurgie, agriculture et paysage des Vosges.",
+    mission: "Repérez les feuilles et les fruits sculptés sous la corniche.",
+    question: { type: "qcm", enonce: "Quel arbre, symbole de force, est sculpté sous la corniche ?", choix: ["Le hêtre", "Le chêne", "Le marronnier", "Le tilleul"] },
+    indice: "Cherchez les glands.",
+    reponse: 1, explication: "Le chêne, avec ses feuilles et ses glands, symbole de force.",
+  },
+  {
+    id: 8, partie: 1, titre: "Brasserie L'Excelsior", adresse: "50 rue Henri-Poincaré",
+    lat: 48.690781, lon: 6.175566, photo: "img/excelsior.jpg",
+    intro: "Ouverte en 1911, elle a failli disparaître dans les années 1970. Majorelle signe le mobilier, Gruber les vitraux. C'est l'époque où l'électricité se développe.",
+    mission: "Comptez les pommes de pin de verre dans la marquise. Puis, à table !",
+    question: { type: "qcm", enonce: "Quelle cristallerie a fourni les abat-jour et les lustres ?", choix: ["Baccarat", "Lalique", "Daum", "Saint-Louis"] },
+    indice: "Une maison nancéienne, toujours active.",
+    reponse: 2, explication: "La cristallerie Daum, en collaboration avec les ateliers Majorelle pour la ferronnerie des luminaires.",
+  },
+
+  // ---------------- PARTIE 2 : L'APRÈS-MIDI ----------------
+  {
+    id: 9, partie: 2, titre: "L'Excelsior, l'extension", adresse: "50 rue Henri-Poincaré",
+    lat: 48.690781, lon: 6.175566, photo: null,
+    intro: "Après le déjeuner, ouvrez l'œil : la brasserie a été agrandie. Entre l'Art nouveau et l'Art déco, les lignes courbes et végétales laissent place aux lignes droites et géométriques.",
+    mission: "Prenez une photo de la partie d'origine et une de l'extension.",
+    question: { type: "nombre", enonce: "En quelle année la brasserie a-t-elle été agrandie ?", tolerance: 0 },
+    indice: "Une décennie après la Première Guerre mondiale.",
+    reponse: 1930, explication: "1930 : l'extension appartient déjà à l'Art déco.",
+  },
+  {
+    id: 10, partie: 2, titre: "Ancien siège de L'Est Républicain", adresse: "5 bis avenue Foch",
+    lat: 48.689368, lon: 6.176573, photo: null,
+    intro: "Ancien siège du journal régional, à deux pas de la gare. Une façade Art nouveau sur l'avenue Foch.",
+    mission: "Observez les piliers et les ornements.",
+    question: { type: "texte", enonce: "Citez trois matériaux visibles sur la façade." },
+    indice: "Pierre, métal, verre, céramique, bois : regardez de près.",
+    reponse: null, explication: "Réponse notée par l'enseignant.",
+  },
+  {
+    id: 11, partie: 2, titre: "Conciergerie du parc de Saurupt", adresse: "2 rue des Brice",
+    lat: 48.679939, lon: 6.181497, photo: null,
+    intro: "En 1901, Jules Villard lotit le parc de son château en cité-jardin : 88 parcelles prévues, confiées à Émile André et Henri Gutton. Cette petite loge de 1902 gardait l'entrée.",
+    mission: "Faites un croquis rapide : l'entrée, la loge, la rue, les premières parcelles.",
+    question: { type: "qcm", enonce: "Pourquoi un gardien à l'entrée du lotissement ?", choix: ["Pour percevoir un péage", "C'était un parc privé fermé par des grilles", "Pour surveiller un chantier", "Pour accueillir les touristes"] },
+    indice: "Le parc n'était pas ouvert à tous.",
+    reponse: 1, explication: "Saurupt était un parc privé, avec grilles et gardien. Il a ensuite été relié au domaine public.",
+  },
+  {
+    id: 12, partie: 2, titre: "Villa Les Glycines", adresse: "5 rue des Brice",
+    lat: 48.679439, lon: 6.182145, photo: null,
+    intro: "Villa en pierre de taille, avec brique et ferronnerie, construite de 1902 à 1904.",
+    mission: "Photographiez un détail végétal et un détail purement fonctionnel (gouttière, grille, cheminée).",
+    question: { type: "qcm", enonce: "Qui est l'architecte de la villa ?", choix: ["Lucien Weissenburger", "Émile André", "Henri Sauvage", "Charles Masson"] },
+    indice: "Il a aussi dessiné la conciergerie.",
+    reponse: 1, explication: "Émile André, l'un des deux architectes du lotissement.",
+  },
+  {
+    id: 13, partie: 2, titre: "Villa Les Roches", adresse: "6 rue des Brice",
+    lat: 48.678984, lon: 6.181772, photo: null,
+    intro: "Juste en face des Glycines, une autre villa du même architecte, de 1904.",
+    mission: "Trouvez trois points communs avec Les Glycines.",
+    question: { type: "texte", enonce: "Quels sont vos trois points communs entre les deux villas ?" },
+    indice: "Matériaux, toitures, ouvertures, décor.",
+    reponse: null, explication: "Réponse notée par l'enseignant.",
+  },
+  {
+    id: 14, partie: 2, titre: "Villa Marguerite", adresse: "3 rue du Colonel-Renard",
+    lat: 48.678667, lon: 6.181466, photo: null,
+    intro: "Œuvre de Joseph Hornecker et Henri Gutton, quatrième maison construite dans le parc. Le grand projet de cité-jardin n'a jamais été achevé.",
+    mission: "Remplissez la fiche du tribunal des styles pour cette villa.",
+    question: { type: "nombre", enonce: "Combien de villas ont été construites sur la centaine imaginée ?", tolerance: 0 },
+    indice: "Moins de dix.",
+    reponse: 6, explication: "Seulement 6 villas. Des maisons mitoyennes ont ensuite remplacé le projet.",
+  },
+  {
+    id: 15, partie: 2, titre: "Villa Masson", adresse: "8 rue du Maréchal-Gérard",
+    lat: 48.678107, lon: 6.181446, photo: null,
+    intro: "Construite en 1926 par l'architecte Charles Masson. Vingt ans après les villas voisines, le style a changé.",
+    mission: "Comparez avec la villa Marguerite : lignes, décor, volumes.",
+    question: { type: "qcm", enonce: "Verdict du tribunal : quel est le style de cette villa ?", choix: ["Art nouveau", "Art déco", "Néo-gothique", "Haussmannien"] },
+    indice: "Regardez si les lignes sont courbes ou droites.",
+    reponse: 1, explication: "Art déco : géométrie, symétrie, décor stylisé.",
+  },
+  {
+    id: 16, partie: 2, titre: "Villa Lang", adresse: "1 boulevard Georges-Clemenceau",
+    lat: 48.678639, lon: 6.180391, photo: null,
+    intro: "Villa construite en 1905 et 1906 pour un industriel du textile, avec un haut toit d'ardoise.",
+    mission: "Bilan de Saurupt : classez les maisons vues en Art nouveau, Art déco ou mixte.",
+    question: { type: "qcm", enonce: "Qui est l'architecte de la villa Lang ?", choix: ["Lucien Weissenburger", "Émile André", "Henri Gutton", "Eugène Vallin"] },
+    indice: "Il a aussi travaillé sur l'Excelsior et la villa Majorelle.",
+    reponse: 0, explication: "Lucien Weissenburger.",
+  },
+  {
+    id: 17, partie: 2, titre: "Parc Sainte-Marie", adresse: "Avenue Boffrand",
+    lat: 48.680556, lon: 6.170556, photo: null,
+    intro: "Pause ! Ce parc a accueilli en 1909 une grande exposition qui a fait connaître Nancy dans toute l'Europe.",
+    mission: "Reprenez votre souffle et vos fiches.",
+    question: { type: "nombre", enonce: "En quelle année s'est tenue l'Exposition internationale de l'Est de la France ?", tolerance: 0 },
+    indice: "Deux ans après les travaux du Crédit Lyonnais.",
+    reponse: 1909, explication: "1909, de mai à novembre.",
+  },
+  {
+    id: 18, partie: 2, titre: "Nancy Thermal", adresse: "41 rue du Sergent-Blandan",
+    lat: 48.679005, lon: 6.168811, photo: null,
+    intro: "Une source d'eau chaude a été mise en service à l'occasion de l'exposition. Le complexe thermal a été modernisé depuis.",
+    mission: "Observez la façade et rendez votre verdict de style.",
+    question: { type: "qcm", enonce: "À quelle occasion la source a-t-elle été inaugurée ?", choix: ["L'Exposition universelle de Paris", "L'Exposition internationale de l'Est de la France", "La création de l'École de Nancy", "La fin de la Première Guerre mondiale"] },
+    indice: "Vous venez de répondre à cette question au parc.",
+    reponse: 1, explication: "Pendant l'Exposition internationale de l'Est de la France, en 1909.",
+  },
+  {
+    id: 19, partie: 2, titre: "Rue Félix-Faure", adresse: "Vers le n° 26",
+    lat: 48.678197, lon: 6.165863, photo: null,
+    intro: "Avec Saurupt, c'est l'autre ensemble urbain Art nouveau de Nancy : des maisons colorées pour la classe moyenne, loties de 1903 à 1913. Le n° 36 est d'Émile André.",
+    mission: "Cherchez les clous à décor de ginkgo et la maison qui rappelle Saurupt.",
+    question: { type: "qcm", enonce: "Qui est l'architecte et promoteur des maisons colorées des n° 24 à 30 ?", choix: ["César Pain", "Émile André", "Charles Masson", "Henri Sauvage"] },
+    indice: "Son nom se mange.",
+    reponse: 0, explication: "César Pain, architecte et promoteur.",
+  },
+  {
+    id: 20, partie: 2, titre: "Musée de l'École de Nancy", adresse: "36-38 rue du Sergent-Blandan",
+    lat: 48.68053, lon: 6.166169, photo: null,
+    intro: "Le musée est installé dans l'ancienne demeure du mécène rencontré ce matin à l'étape 4. Dans le jardin, le portail des ateliers Gallé.",
+    mission: "Si vous visitez, cherchez une œuvre de chaque artiste rencontré aujourd'hui.",
+    question: { type: "qcm", enonce: "À qui appartenait cette maison ?", choix: ["Louis Majorelle", "Eugène Corbin", "Émile Gallé", "Jules Villard"] },
+    indice: "Le patron des Magasins Réunis.",
+    reponse: 1, explication: "Eugène Corbin, mécène de l'École de Nancy.",
+  },
+  {
+    id: 21, partie: 2, titre: "Villa Majorelle", adresse: "1 rue Louis-Majorelle",
+    lat: 48.685486, lon: 6.163878, photo: null,
+    intro: "Construite de 1901 à 1902 pour Louis Majorelle, classée monument historique. Une œuvre d'art totale : architecture, céramique, ferronnerie et vitraux.",
+    mission: "Trouvez un matériau, un détail d'artisanat et un geste de composition nouveau pour l'époque.",
+    question: { type: "qcm", enonce: "Quel architecte parisien a conçu la villa ?", choix: ["Hector Guimard", "Henri Sauvage", "Auguste Perret", "Émile André"] },
+    indice: "Il travaillait avec Lucien Weissenburger.",
+    reponse: 1, explication: "Henri Sauvage, avec Lucien Weissenburger.",
+  },
+  {
+    id: 22, partie: 2, titre: "Immeuble Lombard", adresse: "69 avenue Foch",
+    lat: 48.686416, lon: 6.167916, photo: null,
+    intro: "Immeuble de rapport d'Émile André pour un maître-carrier, en béton armé, 21 mètres de haut. Façade et toiture classées.",
+    mission: "Comparez avec la maison voisine au n° 71.",
+    question: { type: "nombre", enonce: "Combien d'étages au-dessus du rez-de-chaussée ?", tolerance: 0 },
+    indice: "On note R+? sur les plans.",
+    reponse: 5, explication: "R+5 : cinq étages au-dessus du rez-de-chaussée. Bravo, le carnet est complet !",
+  },
+];
+
+// Version publique, sans les réponses
+export function etapesPubliques() {
+  return ETAPES.map(({ reponse, explication, ...e }) => e);
+}
