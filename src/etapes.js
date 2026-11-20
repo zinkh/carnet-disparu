@@ -245,7 +245,7 @@ export const GUIDE = {
 
 // Version publique, sans les réponses ni le guide
 export function etapesPubliques() {
-  return ETAPES.map(({ reponse, explication, ...e }) => e);
+  return ETAPES.map(({ reponse, explication, indice, ...e }) => e);
 }
 
 // Version enseignant : tout, plus le libellé de la bonne réponse
