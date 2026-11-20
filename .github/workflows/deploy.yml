@@ -16,13 +16,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Installer Wrangler
         run: npm install --no-audit --no-fund
 
       - name: Créer ou retrouver la base D1
         run: |
+          set -o pipefail
           trouver_id() {
             npx wrangler d1 list --json | node -e "const l=JSON.parse(require('fs').readFileSync(0,'utf8'));const d=l.find(x=>x.name==='carnet-disparu');process.stdout.write(d?(d.uuid||d.id):'')"
           }
