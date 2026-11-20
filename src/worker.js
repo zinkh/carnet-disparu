@@ -1,6 +1,6 @@
 // Cloudflare Worker : API du jeu « Le carnet disparu »
 // Les fichiers du dossier public/ sont servis automatiquement (assets).
-import { JEU, ETAPES, etapesPubliques } from "./etapes.js";
+import { JEU, ETAPES, etapesPubliques, etapesEnseignant } from "./etapes.js";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -158,7 +158,7 @@ async function api(request, env, url) {
       const bonus = await db.prepare(`SELECT b.*, e.nom AS equipe FROM bonus b JOIN equipes e ON e.id = b.equipe_id
         WHERE b.partie = ? ORDER BY b.cree_le DESC`).bind(partie).all();
       return json({ partie, equipes, reponses: reponses.results, bonus: bonus.results,
-        etapes: ETAPES.map((e) => ({ id: e.id, titre: e.titre, lat: e.lat, lon: e.lon, question: e.question.enonce, type: e.question.type })) });
+        etapes: etapesEnseignant() });
     }
 
     if (chemin === "/api/admin/noter" && methode === "POST") {

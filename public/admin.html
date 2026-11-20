@@ -32,6 +32,25 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 #carte{height:420px;border-radius:14px}
 .defile{max-height:520px;overflow:auto}
 .cache{display:none!important}
+.onglets{display:flex;gap:8px;flex-wrap:wrap}
+.puces{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.puce{flex:none;width:40px;height:40px;border-radius:50%;border:2px solid transparent;font-weight:800;color:#fff;cursor:pointer;font:inherit;font-weight:800}
+.puce.p1{background:#C8462F}.puce.p2{background:#0E716D}
+.puce.active{outline:3px solid var(--yel);outline-offset:2px}
+.guide-tete{display:flex;gap:12px;align-items:center}
+.gros-num{width:52px;height:52px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:24px}
+.bloc{border-radius:16px;padding:14px 16px;line-height:1.6;font-size:16px}
+.bloc h3{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:18px;margin:0 0 6px}
+.bloc p{margin:0 0 10px}.bloc p:last-child{margin:0}
+.raconter{background:var(--t-yel)}
+.eleves{background:#fff;border:2px dashed #e3d7bb}
+.enonce{background:#fff}
+.choix-g{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.choix-g li{border:2px solid #e9dfc8;border-radius:12px;padding:8px 12px}
+.choix-g li.ok{border-color:var(--teal);background:var(--t-teal);font-weight:700}
+.nav-guide{position:sticky;bottom:0;display:flex;gap:10px;justify-content:space-between;padding:10px 0;background:var(--paper)}
+.photo-g{width:100%;max-height:260px;object-fit:cover;border-radius:16px;display:block}
+details summary{cursor:pointer;font-weight:700}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;display:none;font-weight:600}
 </style>
 </head>
@@ -55,6 +74,21 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   </form>
 
   <div id="tableau" class="cache" style="display:flex;flex-direction:column;gap:18px">
+    <div class="onglets" role="tablist">
+      <button class="btn plein" data-vue="guide" role="tab">Guide de visite</button>
+      <button class="btn" data-vue="suivi" role="tab">Suivi des équipes</button>
+    </div>
+
+    <section id="vueGuide" style="display:flex;flex-direction:column;gap:14px">
+      <div class="puces" id="puces" aria-label="Choisir une étape"></div>
+      <div id="ficheGuide" style="display:flex;flex-direction:column;gap:14px"></div>
+      <div class="nav-guide">
+        <button class="btn" id="precedent">Étape précédente</button>
+        <button class="btn plein" id="suivante">Étape suivante</button>
+      </div>
+    </section>
+
+    <div id="vueSuivi" class="cache" style="display:flex;flex-direction:column;gap:18px">
     <div class="grille">
       <section class="carte"><h2 style="font-size:24px;margin-bottom:10px">Classement</h2>
         <table><thead><tr><th>#</th><th>Équipe</th><th>Membres</th><th class="num">Étapes</th><th class="num">Points</th></tr></thead><tbody id="classement"></tbody></table>
@@ -82,6 +116,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     <section class="carte"><h2 style="font-size:24px;margin-bottom:10px">Bonus attribués</h2>
       <table><thead><tr><th>Heure</th><th>Équipe</th><th class="num">Points</th><th>Motif</th></tr></thead><tbody id="bonus"></tbody></table>
     </section>
+    </div>
   </div>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -129,7 +164,56 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     $("#bonus").innerHTML = donnees.bonus.map((b) => `<tr><td>${heure(b.cree_le)}</td><td>${esc(b.equipe)}</td><td class="num">${b.points}</td><td>${esc(b.motif)}</td></tr>`).join("") || `<tr><td colspan="4">Aucun bonus.</td></tr>`;
     $("#csv").href = API + "/api/admin/export.csv?partie=" + encodeURIComponent(partie) + "&cle=" + encodeURIComponent(cle);
     majCarte();
+    afficherGuide();
   }
+
+  // ---------- Mode guide ----------
+  let numGuide = Number(sessionStorage.getItem("carnet-guide") || 1), dernierGuide = null;
+  const paragraphes = (t) => String(t || "").split(/\n\n+/).map((p) => `<p>${esc(p)}</p>`).join("");
+  function afficherGuide() {
+    if (!donnees) return;
+    const E = donnees.etapes;
+    numGuide = Math.min(Math.max(1, numGuide), E.length);
+    sessionStorage.setItem("carnet-guide", numGuide);
+    $("#puces").innerHTML = E.map((e) => `<button class="puce p${e.partie}${e.id === numGuide ? " active" : ""}" data-g="${e.id}" aria-label="Étape ${e.id}, ${esc(e.titre)}">${e.id}</button>`).join("");
+    document.querySelectorAll("[data-g]").forEach((b) => (b.onclick = () => { numGuide = Number(b.dataset.g); afficherGuide(); window.scrollTo({ top: 0, behavior: "smooth" }); }));
+    const actif = document.querySelector(".puce.active");
+    if (actif && dernierGuide !== numGuide) { const c = $("#puces"); c.scrollLeft = actif.offsetLeft - c.clientWidth / 2 + 20; }
+    const ouvert = dernierGuide === numGuide && document.querySelector("#ficheGuide details")?.open;
+    dernierGuide = numGuide;
+    const e = E.find((x) => x.id === numGuide);
+    const q = e.question;
+    const rep = donnees.reponses.filter((r) => r.etape === e.id);
+    const justes = rep.filter((r) => r.statut === "juste").length;
+    const couleur = e.partie === 1 ? "#C8462F" : "#0E716D";
+    let enonce = `<b>${esc(q.enonce)}</b>`;
+    if (q.type === "qcm") enonce += `<ul class="choix-g">${q.choix.map((c, i) => `<li class="${i === e.reponse ? "ok" : ""}">${esc(c)}${i === e.reponse ? " : bonne réponse" : ""}</li>`).join("")}</ul>`;
+    else if (q.type === "nombre") enonce += `<p style="margin-top:8px">Réponse attendue : <b>${esc(e.solution)}</b></p>`;
+    else enonce += `<p style="margin-top:8px">Réponse libre, à noter dans le suivi des équipes.</p>`;
+    $("#ficheGuide").innerHTML = `
+      <div class="guide-tete"><div class="gros-num" style="background:${couleur}">${e.id}</div>
+        <div><h2 style="font-size:28px;line-height:1.05">${esc(e.titre)}</h2><div style="color:var(--grey);font-size:14px">${esc(e.adresse)} · Partie ${e.partie}, ${e.partie === 1 ? "le matin" : "l'après-midi"}</div></div></div>
+      ${e.photo ? `<img class="photo-g" src="${e.photo}" alt="${esc(e.titre)}">` : ""}
+      <div class="bloc raconter"><h3>À raconter</h3>${paragraphes(e.guide)}</div>
+      <div class="bloc enonce"><h3>Énoncé du jeu</h3>${enonce}
+        ${e.explication ? `<p style="margin-top:10px"><b>Explication donnée après la réponse :</b> ${esc(e.explication)}</p>` : ""}
+        <p style="margin-top:6px"><b>Indice :</b> ${esc(e.indice)}</p></div>
+      <div class="bloc enonce"><h3>Réponses des équipes</h3>
+        <p>${rep.length} équipe${rep.length > 1 ? "s ont" : " a"} répondu${q.type !== "texte" ? `, ${justes} juste${justes > 1 ? "s" : ""}` : ""}.</p>
+        ${rep.length ? `<ul style="margin:6px 0 0;padding-left:18px">${rep.map((r) => `<li><b>${esc(r.equipe)}</b> : ${esc(r.reponse || "étape passée")} <span class="tag ${r.statut}">${{ juste: "juste", faux: "faux", a_noter: "à noter", passee: "passée" }[r.statut]}</span></li>`).join("")}</ul>` : ""}</div>
+      <details class="bloc eleves"${ouvert ? " open" : ""}><summary>Ce que lisent les étudiants</summary><p style="margin-top:8px">${esc(e.intro)}</p><p><b>Mission :</b> ${esc(e.mission)}</p></details>`;
+    $("#precedent").disabled = numGuide <= 1;
+    $("#suivante").disabled = numGuide >= E.length;
+  }
+  $("#precedent").onclick = () => { numGuide--; afficherGuide(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  $("#suivante").onclick = () => { numGuide++; afficherGuide(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  document.querySelectorAll("[data-vue]").forEach((b) => (b.onclick = () => {
+    const v = b.dataset.vue;
+    document.querySelectorAll("[data-vue]").forEach((x) => x.classList.toggle("plein", x === b));
+    $("#vueGuide").classList.toggle("cache", v !== "guide");
+    $("#vueSuivi").classList.toggle("cache", v !== "suivi");
+    if (v === "suivi") setTimeout(() => carte && carte.invalidateSize(), 50);
+  }));
 
   function majCarte() {
     if (!carte) {
