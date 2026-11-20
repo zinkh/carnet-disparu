@@ -70,7 +70,7 @@ GitHub Pages ne peut pas enregistrer de réponses seul : il faut toujours une AP
    - `ADMIN_KEY` : la clé de l'espace enseignant, au choix
 5. Onglet Actions, « Déployer sur Cloudflare », Run workflow. L'adresse du jeu apparaît dans le journal de l'étape « Publier le jeu ».
 
-Chaque modification poussée sur `main` redéploie le jeu.
+Ce dépôt est relié à Cloudflare Workers Builds : chaque modification poussée sur `main` est publiée par Cloudflare. Le workflow GitHub ne sert plus qu'en lancement manuel (base de données, clé enseignant).
 
 ---
 

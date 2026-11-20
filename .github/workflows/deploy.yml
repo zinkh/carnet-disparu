@@ -1,9 +1,9 @@
 name: Déployer sur Cloudflare
 
+# Lancement manuel uniquement (onglet Actions, Run workflow).
+# La publication courante est faite par Cloudflare Workers Builds, relié au dépôt.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 jobs:
   deploy:
